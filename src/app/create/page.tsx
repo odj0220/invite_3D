@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MapTheme } from "@/types";
+import { MapTheme, BodyType } from "@/types";
+import { ImageUpload } from "@/components/form/ImageUpload";
 
 interface FormData {
   // 맵 테마
@@ -22,6 +23,9 @@ interface FormData {
   groomMother: string;
   groomBank: string;
   groomAccount: string;
+  groomHeight: string;
+  groomBodyType: BodyType;
+  groomFaceImage: string;
 
   // 신부 정보
   brideName: string;
@@ -30,6 +34,9 @@ interface FormData {
   brideMother: string;
   brideBank: string;
   brideAccount: string;
+  brideHeight: string;
+  brideBodyType: BodyType;
+  brideFaceImage: string;
 
   // 교통 정보
   subway: string;
@@ -49,16 +56,28 @@ const initialFormData: FormData = {
   groomMother: "",
   groomBank: "",
   groomAccount: "",
+  groomHeight: "",
+  groomBodyType: "normal",
+  groomFaceImage: "",
   brideName: "",
   bridePhone: "",
   brideFather: "",
   brideMother: "",
   brideBank: "",
   brideAccount: "",
+  brideHeight: "",
+  brideBodyType: "normal",
+  brideFaceImage: "",
   subway: "",
   bus: "",
   parking: "",
 };
+
+const bodyTypes = [
+  { id: "slim" as BodyType, name: "마름", icon: "🧍" },
+  { id: "normal" as BodyType, name: "보통", icon: "🧍" },
+  { id: "chubby" as BodyType, name: "통통", icon: "🧍" },
+];
 
 const mapThemes = [
   { id: "garden" as MapTheme, name: "클래식 가든", description: "정원 테마의 로맨틱한 분위기" },
@@ -103,10 +122,16 @@ export default function CreatePage() {
         groom_phone: formData.groomPhone,
         groom_father: formData.groomFather,
         groom_mother: formData.groomMother,
+        groom_height: formData.groomHeight ? parseInt(formData.groomHeight) : null,
+        groom_body_type: formData.groomBodyType,
+        groom_face_image: formData.groomFaceImage || null,
         bride_name: formData.brideName,
         bride_phone: formData.bridePhone,
         bride_father: formData.brideFather,
         bride_mother: formData.brideMother,
+        bride_height: formData.brideHeight ? parseInt(formData.brideHeight) : null,
+        bride_body_type: formData.brideBodyType,
+        bride_face_image: formData.brideFaceImage || null,
         transportation: `지하철: ${formData.subway}\n버스: ${formData.bus}\n주차: ${formData.parking}`,
         account_groom: formData.groomBank ? `${formData.groomBank} ${formData.groomAccount}` : "",
         account_bride: formData.brideBank ? `${formData.brideBank} ${formData.brideAccount}` : "",
@@ -338,6 +363,56 @@ export default function CreatePage() {
                   />
                 </div>
               </div>
+
+              {/* 캐릭터 정보 */}
+              <div className="pt-4 border-t">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">캐릭터 설정</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      키 (cm)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="175"
+                      value={formData.groomHeight}
+                      onChange={(e) => updateField("groomHeight", e.target.value)}
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      체형
+                    </label>
+                    <div className="flex gap-2">
+                      {bodyTypes.map((type) => (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => updateField("groomBodyType", type.id)}
+                          className={`flex-1 py-3 rounded-lg border-2 transition ${
+                            formData.groomBodyType === type.id
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="text-center">
+                            <div className="text-lg">{type.icon}</div>
+                            <div className="text-xs">{type.name}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <ImageUpload
+                    label="얼굴 정면 사진"
+                    value={formData.groomFaceImage}
+                    onChange={(url) => updateField("groomFaceImage", url)}
+                  />
+                </div>
+              </div>
             </div>
           )}
 
@@ -422,6 +497,56 @@ export default function CreatePage() {
                     value={formData.brideAccount}
                     onChange={(e) => updateField("brideAccount", e.target.value)}
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* 캐릭터 정보 */}
+              <div className="pt-4 border-t">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">캐릭터 설정</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      키 (cm)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="165"
+                      value={formData.brideHeight}
+                      onChange={(e) => updateField("brideHeight", e.target.value)}
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      체형
+                    </label>
+                    <div className="flex gap-2">
+                      {bodyTypes.map((type) => (
+                        <button
+                          key={type.id}
+                          type="button"
+                          onClick={() => updateField("brideBodyType", type.id)}
+                          className={`flex-1 py-3 rounded-lg border-2 transition ${
+                            formData.brideBodyType === type.id
+                              ? "border-pink-500 bg-pink-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="text-center">
+                            <div className="text-lg">{type.icon}</div>
+                            <div className="text-xs">{type.name}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <ImageUpload
+                    label="얼굴 정면 사진"
+                    value={formData.brideFaceImage}
+                    onChange={(url) => updateField("brideFaceImage", url)}
                   />
                 </div>
               </div>

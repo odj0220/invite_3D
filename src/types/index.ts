@@ -13,6 +13,9 @@ export type InteractionType =
 // 맵 테마 타입
 export type MapTheme = "garden" | "city" | "forest";
 
+// 체형 타입
+export type BodyType = "slim" | "normal" | "chubby";
+
 // 건물 데이터 타입
 export interface BuildingData {
   id: InteractionType;
@@ -90,10 +93,16 @@ export interface Invitation {
   groom_phone: string;
   groom_father: string;
   groom_mother: string;
+  groom_height: number | null;
+  groom_body_type: BodyType | null;
+  groom_face_image: string | null;
   bride_name: string;
   bride_phone: string;
   bride_father: string;
   bride_mother: string;
+  bride_height: number | null;
+  bride_body_type: BodyType | null;
+  bride_face_image: string | null;
   transportation: string;
   account_groom: string;
   account_bride: string;
@@ -111,10 +120,16 @@ export interface InvitationInput {
   groom_phone: string;
   groom_father: string;
   groom_mother: string;
+  groom_height?: number;
+  groom_body_type?: BodyType;
+  groom_face_image?: string;
   bride_name: string;
   bride_phone: string;
   bride_father: string;
   bride_mother: string;
+  bride_height?: number;
+  bride_body_type?: BodyType;
+  bride_face_image?: string;
   transportation: string;
   account_groom: string;
   account_bride: string;
