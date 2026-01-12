@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState, use } from "react";
 import { Canvas } from "@react-three/fiber";
 import { GameProvider, useGame } from "@/contexts/GameContext";
 import {
@@ -13,6 +14,7 @@ import {
   GuestbookWall,
 } from "@/components/canvas";
 import { Modal } from "@/components/ui/Modal";
+import { Invitation } from "@/types";
 import Link from "next/link";
 
 function Scene() {
@@ -52,10 +54,61 @@ function Scene() {
 export default function InvitationPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
+  const [invitation, setInvitation] = useState<Invitation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchInvitation() {
+      try {
+        const response = await fetch(`/api/invitation/${id}`);
+        if (!response.ok) {
+          throw new Error("청첩장을 찾을 수 없습니다");
+        }
+        const { data } = await response.json();
+        setInvitation(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "오류가 발생했습니다");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchInvitation();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">청첩장을 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Link
+            href="/"
+            className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600"
+          >
+            홈으로 돌아가기
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <GameProvider mapId={params.id}>
+    <GameProvider invitation={invitation}>
       <main className="w-full h-screen relative">
         {/* 상단 네비게이션 */}
         <div className="absolute top-4 left-4 z-10">

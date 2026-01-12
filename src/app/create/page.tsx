@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { MapTheme } from "@/types";
 
 interface FormData {
+  // 맵 테마
+  mapTheme: MapTheme;
+
   // 예식 정보
   weddingDate: string;
   weddingTime: string;
@@ -12,23 +17,19 @@ interface FormData {
 
   // 신랑 정보
   groomName: string;
-  groomBirth: string;
-  groomJob: string;
-  groomHobby: string;
-  groomMbti: string;
   groomPhone: string;
-  groomAccount: string;
+  groomFather: string;
+  groomMother: string;
   groomBank: string;
+  groomAccount: string;
 
   // 신부 정보
   brideName: string;
-  brideBirth: string;
-  brideJob: string;
-  brideHobby: string;
-  brideMbti: string;
   bridePhone: string;
-  brideAccount: string;
+  brideFather: string;
+  brideMother: string;
   brideBank: string;
+  brideAccount: string;
 
   // 교통 정보
   subway: string;
@@ -37,36 +38,41 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
+  mapTheme: "garden",
   weddingDate: "",
   weddingTime: "",
   weddingVenue: "",
   weddingAddress: "",
   groomName: "",
-  groomBirth: "",
-  groomJob: "",
-  groomHobby: "",
-  groomMbti: "",
   groomPhone: "",
-  groomAccount: "",
+  groomFather: "",
+  groomMother: "",
   groomBank: "",
+  groomAccount: "",
   brideName: "",
-  brideBirth: "",
-  brideJob: "",
-  brideHobby: "",
-  brideMbti: "",
   bridePhone: "",
-  brideAccount: "",
+  brideFather: "",
+  brideMother: "",
   brideBank: "",
+  brideAccount: "",
   subway: "",
   bus: "",
   parking: "",
 };
 
+const mapThemes = [
+  { id: "garden" as MapTheme, name: "클래식 가든", description: "정원 테마의 로맨틱한 분위기" },
+  { id: "city" as MapTheme, name: "모던 시티", description: "도시적인 세련된 분위기" },
+  { id: "forest" as MapTheme, name: "포레스트", description: "자연 속 힐링 컨셉" },
+];
+
 const steps = ["예식 정보", "신랑 정보", "신부 정보", "교통 정보", "미리보기"];
 
 export default function CreatePage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -84,10 +90,46 @@ export default function CreatePage() {
     }
   };
 
-  const handleSubmit = () => {
-    // TODO: 서버에 데이터 저장 후 청첩장 페이지로 이동
-    console.log("Form submitted:", formData);
-    alert("청첩장이 생성되었습니다! (데모)");
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        map_theme: formData.mapTheme,
+        wedding_date: formData.weddingDate,
+        wedding_time: formData.weddingTime,
+        venue_name: formData.weddingVenue,
+        venue_address: formData.weddingAddress,
+        groom_name: formData.groomName,
+        groom_phone: formData.groomPhone,
+        groom_father: formData.groomFather,
+        groom_mother: formData.groomMother,
+        bride_name: formData.brideName,
+        bride_phone: formData.bridePhone,
+        bride_father: formData.brideFather,
+        bride_mother: formData.brideMother,
+        transportation: `지하철: ${formData.subway}\n버스: ${formData.bus}\n주차: ${formData.parking}`,
+        account_groom: formData.groomBank ? `${formData.groomBank} ${formData.groomAccount}` : "",
+        account_bride: formData.brideBank ? `${formData.brideBank} ${formData.brideAccount}` : "",
+      };
+
+      const response = await fetch("/api/invitation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create invitation");
+      }
+
+      const { data } = await response.json();
+      router.push(`/invitation/${data.id}`);
+    } catch (error) {
+      console.error("Error creating invitation:", error);
+      alert("청첩장 생성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -136,6 +178,31 @@ export default function CreatePage() {
               <h2 className="text-2xl font-bold text-gray-800 mb-6">
                 예식 정보
               </h2>
+
+              {/* 맵 테마 선택 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  청첩장 테마
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {mapThemes.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => updateField("mapTheme", theme.id)}
+                      className={`p-4 rounded-lg border-2 text-left transition ${
+                        formData.mapTheme === theme.id
+                          ? "border-pink-500 bg-pink-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="font-medium text-gray-800">{theme.name}</div>
+                      <div className="text-xs text-gray-500 mt-1">{theme.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -208,63 +275,42 @@ export default function CreatePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    생년월일
+                    연락처
                   </label>
                   <input
-                    type="date"
-                    value={formData.groomBirth}
-                    onChange={(e) => updateField("groomBirth", e.target.value)}
+                    type="tel"
+                    placeholder="010-1234-5678"
+                    value={formData.groomPhone}
+                    onChange={(e) => updateField("groomPhone", e.target.value)}
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    아버지 성함
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="홍판서"
+                    value={formData.groomFather}
+                    onChange={(e) => updateField("groomFather", e.target.value)}
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    직업
+                    어머니 성함
                   </label>
                   <input
                     type="text"
-                    placeholder="회사원"
-                    value={formData.groomJob}
-                    onChange={(e) => updateField("groomJob", e.target.value)}
+                    placeholder="김순자"
+                    value={formData.groomMother}
+                    onChange={(e) => updateField("groomMother", e.target.value)}
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    MBTI
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="INTJ"
-                    value={formData.groomMbti}
-                    onChange={(e) => updateField("groomMbti", e.target.value)}
-                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  취미
-                </label>
-                <input
-                  type="text"
-                  placeholder="등산, 독서"
-                  value={formData.groomHobby}
-                  onChange={(e) => updateField("groomHobby", e.target.value)}
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  연락처
-                </label>
-                <input
-                  type="tel"
-                  placeholder="010-1234-5678"
-                  value={formData.groomPhone}
-                  onChange={(e) => updateField("groomPhone", e.target.value)}
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                />
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -316,63 +362,42 @@ export default function CreatePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    생년월일
+                    연락처
                   </label>
                   <input
-                    type="date"
-                    value={formData.brideBirth}
-                    onChange={(e) => updateField("brideBirth", e.target.value)}
+                    type="tel"
+                    placeholder="010-1234-5678"
+                    value={formData.bridePhone}
+                    onChange={(e) => updateField("bridePhone", e.target.value)}
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    아버지 성함
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="김철수"
+                    value={formData.brideFather}
+                    onChange={(e) => updateField("brideFather", e.target.value)}
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    직업
+                    어머니 성함
                   </label>
                   <input
                     type="text"
-                    placeholder="디자이너"
-                    value={formData.brideJob}
-                    onChange={(e) => updateField("brideJob", e.target.value)}
+                    placeholder="이영자"
+                    value={formData.brideMother}
+                    onChange={(e) => updateField("brideMother", e.target.value)}
                     className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    MBTI
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ENFP"
-                    value={formData.brideMbti}
-                    onChange={(e) => updateField("brideMbti", e.target.value)}
-                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  취미
-                </label>
-                <input
-                  type="text"
-                  placeholder="요리, 여행"
-                  value={formData.brideHobby}
-                  onChange={(e) => updateField("brideHobby", e.target.value)}
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  연락처
-                </label>
-                <input
-                  type="tel"
-                  placeholder="010-1234-5678"
-                  value={formData.bridePhone}
-                  onChange={(e) => updateField("bridePhone", e.target.value)}
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                />
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -456,6 +481,13 @@ export default function CreatePage() {
               </h2>
 
               <div className="space-y-4">
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <h3 className="font-semibold text-purple-700 mb-2">테마</h3>
+                  <p className="text-sm text-gray-600">
+                    {mapThemes.find((t) => t.id === formData.mapTheme)?.name}
+                  </p>
+                </div>
+
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-semibold text-gray-700 mb-2">예식 정보</h3>
                   <p className="text-sm text-gray-600">
@@ -469,14 +501,18 @@ export default function CreatePage() {
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <h3 className="font-semibold text-blue-700 mb-2">신랑</h3>
                     <p className="text-sm text-gray-600">{formData.groomName}</p>
-                    <p className="text-sm text-gray-600">{formData.groomJob}</p>
                     <p className="text-sm text-gray-600">{formData.groomPhone}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.groomFather} · {formData.groomMother}
+                    </p>
                   </div>
                   <div className="p-4 bg-pink-50 rounded-lg">
                     <h3 className="font-semibold text-pink-700 mb-2">신부</h3>
                     <p className="text-sm text-gray-600">{formData.brideName}</p>
-                    <p className="text-sm text-gray-600">{formData.brideJob}</p>
                     <p className="text-sm text-gray-600">{formData.bridePhone}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.brideFather} · {formData.brideMother}
+                    </p>
                   </div>
                 </div>
 
@@ -494,9 +530,9 @@ export default function CreatePage() {
           <div className="flex justify-between mt-8 pt-6 border-t">
             <button
               onClick={prevStep}
-              disabled={currentStep === 0}
+              disabled={currentStep === 0 || isSubmitting}
               className={`px-6 py-3 rounded-lg font-medium ${
-                currentStep === 0
+                currentStep === 0 || isSubmitting
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
@@ -514,9 +550,14 @@ export default function CreatePage() {
             ) : (
               <button
                 onClick={handleSubmit}
-                className="px-6 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600"
+                disabled={isSubmitting}
+                className={`px-6 py-3 rounded-lg font-medium ${
+                  isSubmitting
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-green-500 text-white hover:bg-green-600"
+                }`}
               >
-                청첩장 생성하기
+                {isSubmitting ? "생성 중..." : "청첩장 생성하기"}
               </button>
             )}
           </div>

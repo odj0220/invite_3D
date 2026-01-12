@@ -77,3 +77,45 @@ export interface UseInteractionResult {
   setHovered: (value: boolean) => void;
   handleClick: (e: { stopPropagation: () => void }) => void;
 }
+
+// 청첩장 데이터 타입 (DB)
+export interface Invitation {
+  id: string;
+  map_theme: MapTheme;
+  wedding_date: string;
+  wedding_time: string;
+  venue_name: string;
+  venue_address: string;
+  groom_name: string;
+  groom_phone: string;
+  groom_father: string;
+  groom_mother: string;
+  bride_name: string;
+  bride_phone: string;
+  bride_father: string;
+  bride_mother: string;
+  transportation: string;
+  account_groom: string;
+  account_bride: string;
+  created_at: string;
+}
+
+// 청첩장 생성 입력 타입
+export interface InvitationInput {
+  map_theme: MapTheme;
+  wedding_date: string;
+  wedding_time: string;
+  venue_name: string;
+  venue_address: string;
+  groom_name: string;
+  groom_phone: string;
+  groom_father: string;
+  groom_mother: string;
+  bride_name: string;
+  bride_phone: string;
+  bride_father: string;
+  bride_mother: string;
+  transportation: string;
+  account_groom: string;
+  account_bride: string;
+}

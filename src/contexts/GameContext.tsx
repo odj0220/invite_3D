@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode } from "react";
 import * as THREE from "three";
-import { InteractionType, MapData } from "@/types";
+import { InteractionType, MapData, Invitation } from "@/types";
 import { getMapById } from "@/data/mapData";
 
 // 캐릭터 위치 ref (Three.js 렌더링 루프에서 직접 접근)
@@ -13,6 +13,7 @@ interface GameContextType {
   targetPosition: THREE.Vector3;
   activeModal: InteractionType | null;
   mapData: MapData;
+  invitation: Invitation | null;
   setTargetPosition: (pos: THREE.Vector3) => void;
   openModal: (type: InteractionType) => void;
   closeModal: () => void;
@@ -24,14 +25,15 @@ const GameContext = createContext<GameContextType | null>(null);
 interface GameProviderProps {
   children: ReactNode;
   mapId?: string;
+  invitation?: Invitation | null;
 }
 
-export function GameProvider({ children, mapId = "demo1" }: GameProviderProps) {
+export function GameProvider({ children, mapId = "demo1", invitation = null }: GameProviderProps) {
   const [targetPosition, setTargetPositionState] = useState(
     () => new THREE.Vector3(0, 0, 0)
   );
   const [activeModal, setActiveModal] = useState<InteractionType | null>(null);
-  const mapData = getMapById(mapId);
+  const mapData = getMapById(invitation?.map_theme || mapId);
 
   const setTargetPosition = (pos: THREE.Vector3) => {
     setTargetPositionState(pos.clone());
@@ -51,6 +53,7 @@ export function GameProvider({ children, mapId = "demo1" }: GameProviderProps) {
         targetPosition,
         activeModal,
         mapData,
+        invitation,
         setTargetPosition,
         openModal,
         closeModal,
